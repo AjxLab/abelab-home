@@ -4,7 +4,6 @@ import time
 import shutil
 import threading
 import engine
-import docomo
 import footer
 
 
@@ -35,19 +34,7 @@ print('''
 
 ''' % logo)
 
-try:
-    t = threading.Thread(target=engine.start)
-    t.start()
 
-    msg = '話しかけてください。'
-    while True:
-        print('   HEXAGON： %s' % msg)
-        # HEXAGON終了
-        if msg == 'さようなら。':
-            footer.footer_exit(0)
+engine.Engine()
+footer.footer_exit(0)
 
-        text = input('   You：     ')
-        msg = engine.make_reply(text)
-
-except KeyboardInterrupt:
-    footer.footer_exit(1)
