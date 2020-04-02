@@ -27,12 +27,12 @@ class Recorder(object):
         # 音声データの格納リスト（past：欠け補完，main：メイン音声）
         self.wave = {'head': [], 'main': []}
 
+        # 保存先
         self.file = './wave/speech.wav'
 
-        # 録音開始・終了フラグ
-        self.is_exit = False
-        self.b_record_start = False
-        self.b_record_end = False
+        # フラグを初期化
+        self.b_exit = False
+        self.b_stream = False
 
         # 欠け補完
         self.head_record(True)
@@ -44,24 +44,19 @@ class Recorder(object):
 
     def streamer(self):
         ## -----*----- 録音 -----*----- ##
-        while not self.is_exit:
-            if self.b_record_start:
-                self.record()
+        while not self.b_exit:
+            if self.b_stream:
+                # 音声を格納
+                while self.b_stream:
+                    self.wave['main'].append(self.read())
+                self.dump_wave()
+
                 self.head_record(True)
             else:
                 self.head_record(False)
 
         # 録音スレッドを破壊
         del self.thread
-
-
-    def record(self):
-        ## -----*----- 音声録音 -----*----- ##
-        # 開始フラグが下がるまで音声データを格納
-        while self.b_record_start:
-            self.wave['main'].append(self.read())
-        # ファイル保存
-        self.dump_wave()
 
 
     def head_record(self, init=False):
@@ -90,7 +85,6 @@ class Recorder(object):
 
         # 音声データの初期化
         self.wave = {'head': [], 'main': []}
-        self.b_record_end = True
 
 
     def read(self):
@@ -98,12 +92,16 @@ class Recorder(object):
         return self.pa_streamer.read(self.config['chunk'], exception_on_overflow=False)
 
 
+    def start(self): self.b_stream = True
+    def end(self):   self.b_stream = False
+    def exit(self):  self.b_exit = True
+
+
 if __name__ == '__main__':
     recorder = Recorder()
     time.sleep(2)
     print('start')
-    recorder.b_record_start = True
+    recorder.start()
     time.sleep(1)
-    recorder.b_record_start = False
-    recorder.is_exit = True
-
+    recorder.end()
+    recorder.exit()
