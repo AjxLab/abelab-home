@@ -59,7 +59,7 @@ class Engine():
                     self.reset_state()
                 self.state['n'] += 1
                 self.detection()
-        except:
+        except KeyboardInterrupt:
             self.is_exit = True
             status = 1
 
@@ -94,7 +94,12 @@ class Engine():
             self.record.end()
             self.reset_state()
             self.is_stream = False
-            self.reply()
+            reply = self.reply()
+            if not reply == None:
+                self.msg = reply
+                time.sleep(0.2)
+                print('   HEXAGON： %s' % self.msg)
+                os.system('say {}'.format(reply))
 
 
     def up_edge(self):
@@ -144,6 +149,9 @@ class Engine():
         res = docomo.speech_recognition(self.config['wav_path'])
         if docomo.check_health(res):
             speech = res.json()['text']
+            if speech =='':
+                return None
+
             print('   You：     {}'.format(res.json()['text']))
 
             exit_words = ['さようなら', '終了']
@@ -151,4 +159,12 @@ class Engine():
                 if w in speech:
                     self.is_exit = True
 
+            dajare_words = ['ダジャレ', '地口', 'ジョーク']
+            for w in dajare_words:
+                if w in speech:
+                    url = 'https://script.google.com/macros/s/AKfycbx2h8jWePcUxszENqm4EqO7gk1bMDqGQKOUSPfQkDKtdwfoxAM/exec?randNum=1'
+                    res = requests.get(url)
+                    if docomo.check_health(res):
+                        return res.json()['jokes'][0]['joke']
 
+        return 'すみません、よくわかりません。'

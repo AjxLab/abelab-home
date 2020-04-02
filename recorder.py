@@ -62,7 +62,8 @@ class Recorder(object):
             for i in range(int(self.config['rate'] / self.config['chunk'] * self.config['head_sec'])):
                 self.wave['head'].append(self.read())
         else:
-            self.wave['head'].pop(0)
+            if len(self.wave['head']) > 0:
+                self.wave['head'].pop(0)
             self.wave['head'].append(self.read())
 
 
