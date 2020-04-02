@@ -2,4 +2,4 @@ bit: 16
 rate: 16000
 chunk: 1024
 channels: 1
-past_sec: 0.2
+head_sec: 0.2

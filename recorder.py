@@ -14,8 +14,8 @@ class Recorder(object):
         self.config = yaml.load(open('config/wave.yml'), Loader=yaml.SafeLoader)
 
         # ストリーマの設定
-        self._pa = pyaudio.PyAudio()
-        self.stream = self._pa.open(
+        self.pa = pyaudio.PyAudio()
+        self.pa_streamer = self.pa.open(
             format=pyaudio.paInt16,
             channels=self.config['channels'],
             rate=self.config['rate'],
@@ -25,91 +25,85 @@ class Recorder(object):
         )
 
         # 音声データの格納リスト（past：欠け補完，main：メイン音声）
-        self.audio = {'past': [], 'main': []}
+        self.wave = {'head': [], 'main': []}
+
+        self.file = './wave/speech.wav'
 
         # 録音開始・終了フラグ
-        self.b_record_start = threading.Event()
-        self.b_record_end = threading.Event()
-
-        self.file = './files/source.wav'
-
-        self.exe()
-
-
-    def exe(self):
-        ## -----*----- 処理実行 -----*----- ##
-        # フラグの初期化
         self.is_exit = False
-        self.b_record_start.clear()
-        self.b_record_end.set()
+        self.b_record_start = False
+        self.b_record_end = False
 
-        # 欠け補完部分の録音
-        self.past_record(True)
+        # 欠け補完
+        self.head_record(True)
 
-        # サブスレッド起動
-        self.thread = threading.Thread(target=self.loop)
+        # 録音を並列化
+        self.thread = threading.Thread(target=self.streamer)
         self.thread.start()
 
-    def loop(self):
-        ## -----*----- ループ（録音） -----*----- ##
-        while not self.is_exit:
-            if self.b_record_start.is_set():
-                self.record()
-                self.past_record(True)
-            else:
-                self.past_record(False)
 
-        # 音声録音を行うスレッドを破壊
+    def streamer(self):
+        ## -----*----- 録音 -----*----- ##
+        while not self.is_exit:
+            if self.b_record_start:
+                self.record()
+                self.head_record(True)
+            else:
+                self.head_record(False)
+
+        # 録音スレッドを破壊
         del self.thread
 
 
     def record(self):
         ## -----*----- 音声録音 -----*----- ##
-        # 開始フラグが降りるまで音声データを格納
-        while self.b_record_start.is_set():
-            self.audio['main'].append(self.input_audio())
+        # 開始フラグが下がるまで音声データを格納
+        while self.b_record_start:
+            self.wave['main'].append(self.read())
         # ファイル保存
-        self.save_audio()
+        self.dump_wave()
 
-    def past_record(self, init=False):
+
+    def head_record(self, init=False):
         ## -----*----- 欠け補完部分の録音 -----*----- ##
         if init:
-            self.audio['past'] = []
-            for i in range(int(self.settings['rate'] / self.settings['chunk'] * self.settings['past_second'])):
-                self.audio['past'].append(self.input_audio())
+            self.wave['head'] = []
+            for i in range(int(self.config['rate'] / self.config['chunk'] * self.config['head_sec'])):
+                self.wave['head'].append(self.read())
         else:
-            self.audio['past'].pop(0)
-            self.audio['past'].append(self.input_audio())
+            self.wave['head'].pop(0)
+            self.wave['head'].append(self.read())
 
 
-    def save_audio(self):
-        ## -----*----- 音声データ保存 -----*----- ##
-        # 音声ファイルのフォーマット指定
+    def dump_wave(self):
+        ## -----*----- 音声保存 -----*----- ##
+        # フォーマット指定
         wav = wave.open(self.file, 'wb')
-        wav.setnchannels(self.settings['channels'])
-        wav.setsampwidth(self._pa.get_sample_size(self.settings['format']))
-        wav.setframerate(self.settings['rate'])
+        wav.setnchannels(self.config['channels'])
+        wav.setsampwidth(self.pa.get_sample_size(pyaudio.paInt16))
+        wav.setframerate(self.config['rate'])
 
         # 音声データをファイルに書き込み
-        for data in [self.audio['past'], self.audio['main']]:
+        for data in [self.wave['head'], self.wave['main']]:
             wav.writeframes(b''.join(data))
         wav.close()
 
         # 音声データの初期化
-        self.audio = {'past': [], 'main': []}
-        self.b_record_end.set()
+        self.wave = {'head': [], 'main': []}
+        self.b_record_end = True
 
 
-def input_audio(self):
+    def read(self):
         ## -----*----- 音声入力 -----*----- ##
-        return self.stream.read(self.settings['chunk'], exception_on_overflow=False)
+        return self.pa_streamer.read(self.config['chunk'], exception_on_overflow=False)
 
 
 if __name__ == '__main__':
     recorder = Recorder()
     time.sleep(2)
     print('start')
-    recorder.b_record_start.set()
+    recorder.b_record_start = True
     time.sleep(1)
-    recorder.b_record_start.clear()
-完
+    recorder.b_record_start = False
+    recorder.is_exit = True
+
