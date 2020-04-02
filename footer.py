@@ -1,3 +1,4 @@
+import os
 import time
 
 START_TIME = time.time()
@@ -11,7 +12,7 @@ def footer_exit(status=0):
     print("----------------------------------------------------------------------")
     print("Ran {} {} in {:5.3f}s".format(
         status,
-        __file__,
+        os.path.basename(__file__),
         time.time() - START_TIME
     ))
     print("")
