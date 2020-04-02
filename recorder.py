@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
-import pyaudio
-import wave
 import time
 import yaml
+import wave
+import pyaudio
 import threading
 import requests
 
@@ -11,29 +11,26 @@ import requests
 class Recorder(object):
     def __init__(self):
         ## -----*----- コンストラクタ -----*----- ##
+        self.config = yaml.load(open('config/wave.yml'), Loader=yaml.SafeLoader)
+
+        # ストリーマの設定
         self._pa = pyaudio.PyAudio()
-        # 音声入力の設定
-        self.settings = {
-            'format': pyaudio.paInt16,
-            'channels': 1,
-            'rate': 16000,
-            'chunk': 1024,
-            'past_second': 0.2
-        }
         self.stream = self._pa.open(
-            format=self.settings['format'],
-            channels=self.settings['channels'],
-            rate=self.settings['rate'],
+            format=pyaudio.paInt16,
+            channels=self.config['channels'],
+            rate=self.config['rate'],
             input=True,
             output=False,
-            frames_per_buffer=self.settings['chunk']
+            frames_per_buffer=self.config['chunk'],
         )
-        # 音声データの格納リスト（past：欠け補，main：メインの録音）
+
+        # 音声データの格納リスト（past：欠け補完，main：メイン音声）
         self.audio = {'past': [], 'main': []}
+
         # 録音開始・終了フラグ
-        self.record_start = threading.Event()
-        self.record_end = threading.Event()
-        # 録音ファイル
+        self.b_record_start = threading.Event()
+        self.b_record_end = threading.Event()
+
         self.file = './files/source.wav'
 
         self.exe()
@@ -43,8 +40,8 @@ class Recorder(object):
         ## -----*----- 処理実行 -----*----- ##
         # フラグの初期化
         self.is_exit = False
-        self.record_start.clear()
-        self.record_end.set()
+        self.b_record_start.clear()
+        self.b_record_end.set()
 
         # 欠け補完部分の録音
         self.past_record(True)
@@ -56,7 +53,7 @@ class Recorder(object):
     def loop(self):
         ## -----*----- ループ（録音） -----*----- ##
         while not self.is_exit:
-            if self.record_start.is_set():
+            if self.b_record_start.is_set():
                 self.record()
                 self.past_record(True)
             else:
@@ -69,7 +66,7 @@ class Recorder(object):
     def record(self):
         ## -----*----- 音声録音 -----*----- ##
         # 開始フラグが降りるまで音声データを格納
-        while self.record_start.is_set():
+        while self.b_record_start.is_set():
             self.audio['main'].append(self.input_audio())
         # ファイル保存
         self.save_audio()
@@ -100,7 +97,7 @@ class Recorder(object):
 
         # 音声データの初期化
         self.audio = {'past': [], 'main': []}
-        self.record_end.set()
+        self.b_record_end.set()
 
 
 def input_audio(self):
@@ -112,7 +109,7 @@ if __name__ == '__main__':
     recorder = Recorder()
     time.sleep(2)
     print('start')
-    recorder.record_start.set()
+    recorder.b_record_start.set()
     time.sleep(1)
-    recorder.record_start.clear()
+    recorder.b_record_start.clear()
 完
