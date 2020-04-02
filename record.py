@@ -1,9 +1,14 @@
 # -*- coding: utf-8 -*-
-import pyaudio, wave
-import time, os, threading, requests
+import os
+import pyaudio
+import wave
+import time
+import yaml
+import threading
+import requests
 
 
-class Recording(object):
+class Recorder(object):
     def __init__(self):
         ## -----*----- コンストラクタ -----*----- ##
         self._pa = pyaudio.PyAudio()
@@ -31,9 +36,8 @@ class Recording(object):
         # 録音ファイル
         self.file = './files/source.wav'
 
-        self.play = PlayAudio()
-
         self.exe()
+
 
     def exe(self):
         ## -----*----- 処理実行 -----*----- ##
@@ -61,6 +65,7 @@ class Recording(object):
         # 音声録音を行うスレッドを破壊
         del self.thread
 
+
     def record(self):
         ## -----*----- 音声録音 -----*----- ##
         # 開始フラグが降りるまで音声データを格納
@@ -79,6 +84,7 @@ class Recording(object):
             self.audio['past'].pop(0)
             self.audio['past'].append(self.input_audio())
 
+
     def save_audio(self):
         ## -----*----- 音声データ保存 -----*----- ##
         # 音声ファイルのフォーマット指定
@@ -95,28 +101,18 @@ class Recording(object):
         # 音声データの初期化
         self.audio = {'past': [], 'main': []}
         self.record_end.set()
-        self.send_req()
 
-    def send_req(self):
-        ## -----*----- リクエスト送信 -----*----- ##
-        try:
-            response = requests.post('http://localhost:3001/', timeout=10)
-            pattern = response.json()['result']
-            if pattern != 'Miss':
-                self.play.play(pattern)
-        except:
-            pass
 
-    def input_audio(self):
+def input_audio(self):
         ## -----*----- 音声入力 -----*----- ##
         return self.stream.read(self.settings['chunk'], exception_on_overflow=False)
 
 
 if __name__ == '__main__':
-    record = Recording()
+    recorder = Recorder()
     time.sleep(2)
     print('start')
-    record.record_start.set()
+    recorder.record_start.set()
     time.sleep(1)
-    record.record_start.clear()
+    recorder.record_start.clear()
 完
