@@ -46,7 +46,6 @@ class Recorder(object):
                 # 音声を格納
                 while self.b_stream:
                     self.wave['main'].append(self.read())
-                self.dump_wave()
 
                 self.head_record(True)
             else:
@@ -90,7 +89,7 @@ class Recorder(object):
 
 
     def start(self): self.b_stream = True
-    def end(self):   self.b_stream = False
+    def end(self):   self.b_stream = False; self.dump_wave()
     def exit(self):  self.b_exit = True
 
 

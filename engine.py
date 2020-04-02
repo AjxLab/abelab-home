@@ -94,7 +94,6 @@ class Engine():
             self.record.end()
             self.reset_state()
             self.is_stream = False
-            time.sleep(0.1)
             self.reply()
 
 
