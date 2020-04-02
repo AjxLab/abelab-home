@@ -1,8 +1,8 @@
 version: '3'
 services:
-  dajare-engine:
+  home:
     build: .
     volumes:
       - .:/app
     working_dir: /app
-    command: ./manage.py runserver 0:8080
+    command: ./abelab-home.py
