@@ -27,9 +27,6 @@ class Recorder(object):
         # 音声データの格納リスト（past：欠け補完，main：メイン音声）
         self.wave = {'head': [], 'main': []}
 
-        # 保存先
-        self.file = './wave/speech.wav'
-
         # フラグを初期化
         self.b_exit = False
         self.b_stream = False
@@ -73,7 +70,7 @@ class Recorder(object):
     def dump_wave(self):
         ## -----*----- 音声保存 -----*----- ##
         # フォーマット指定
-        wav = wave.open(self.file, 'wb')
+        wav = wave.open(self.config['wav_path'], 'wb')
         wav.setnchannels(self.config['channels'])
         wav.setsampwidth(self.pa.get_sample_size(pyaudio.paInt16))
         wav.setframerate(self.config['rate'])

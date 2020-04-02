@@ -26,7 +26,7 @@ def reading(text):
 
     for key in APIKEY:
         res = requests.post(url.format(key), headers=header, data=json.dumps(data))
-        if check_health(res, False): return res
+        if check_health(res): return res
 
     return res
 
@@ -39,7 +39,7 @@ def sensitive(text):
 
     for key in APIKEY:
         res = requests.post(url.format(key), headers=header, data=body)
-        if check_health(res, False): return res
+        if check_health(res): return res
 
     return res
 
@@ -51,12 +51,12 @@ def speech_recognition(wav_path):
 
     for key in APIKEY:
         res = requests.post(url.format(key), files=file)
-        if check_health(res, False): return res
+        if check_health(res): return res
 
     return res
 
 
-def check_health(res, alert=True):
+def check_health(res):
     ## -----*----- ステータスチェック -----*----- ##
     code = res.status_code
     try:

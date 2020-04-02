@@ -1,7 +1,8 @@
 #!/usr/bin/env python
+import time
+import recorder
 import docomo
 import footer
-import time
 
 time.sleep(0.5)
-print(footer.footer_exit(1))
+print(footer.footer_exit(0))
