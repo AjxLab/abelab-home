@@ -149,5 +149,6 @@ class Engine():
             exit_words = ['さようなら', '終了']
             for w in exit_words:
                 if w in speech:
-                    raise
+                    self.is_exit = True
+
 
