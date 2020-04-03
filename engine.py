@@ -153,15 +153,6 @@ class Engine():
 
             print('   You：     {}'.format(res.json()['text']))
 
-            # 終了
-            words = ['さようなら', '終了']
-            if not b_talk:
-                for w in words:
-                    if w in speech:
-                        self.is_exit = True
-                        self.msg = 'また遊んでくださいね。'
-                        b_talk = True
-
             # フリーワード検索
             words = ['を検索', 'の意味', 'とは']
             if not b_talk:
@@ -212,6 +203,14 @@ class Engine():
                         self.msg = w + '。'
                         b_talk = True
 
+            # 終了
+            words = ['さようなら', '終了']
+            if not b_talk:
+                for w in words:
+                    if w in speech:
+                        self.is_exit = True
+                        self.msg = 'また遊んでくださいね。'
+                        b_talk = True
 
         if not b_talk:
             self.msg = 'すみません、よくわかりません。'

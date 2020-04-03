@@ -1,3 +1,6 @@
 pyaudio
 wave
+pyyaml
 pycrawl
+numpy
+requests
