@@ -55,6 +55,7 @@ class Engine():
         self.past_time = time.time()
 
         print('   HEXAGON： %s' % self.msg)
+        print('   You：     ')
 
         try:
             while not self.is_exit:
@@ -93,6 +94,7 @@ class Engine():
             self.record.start()
             self.state['border'] = self.state['average']
             self.is_stream = True
+            print('\033[1A   You：     ...')
         if self.down_edge() and self.is_stream:
             self.record.end()
             self.reset_state()
@@ -152,7 +154,8 @@ class Engine():
             if speech =='':
                 return
 
-            print('   You：     {}'.format(res.json()['text']))
+            #print('   You：     {}'.format(res.json()['text']))
+            print('\033[1A   You：     {}'.format(res.json()['text']))
 
             # ダジャレを評価
             if self.talk_dajare:
@@ -212,7 +215,7 @@ class Engine():
             if not b_talk:
                 for w in words:
                     if re.match(w, speech):
-                        self.msg = '初めまして。私の名前はHEXAGON、阿部健太朗さんによって開発されたお手伝いbotです。'
+                        self.msg = '初めまして。私の名前は[HEXAGON|ヘキサゴン]、[阿部竜也|アベタツヤ]さんによって開発されたお手伝いbotです。'
                         b_talk = True
                         break
 
@@ -246,7 +249,13 @@ class Engine():
 
         if not b_talk:
             self.msg = 'すみません、よくわかりません。'
+
         time.sleep(0.2)
+        talk = self.msg
+        for c in re.findall(r'\[.+?\]', self.msg):
+            self.msg = self.msg.replace(c, c.split('|')[0].replace('[', ''))
+            talk = talk.replace(c, c.split('|')[1].replace(']', ''))
         print('   HEXAGON： %s' % self.msg)
-        os.system('say {}'.format(self.msg))
+        os.system('say {}'.format(talk))
+        print('   You：     ')
 
