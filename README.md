@@ -13,15 +13,22 @@ Smart speaker working from my home.
 
 
 ## Usage
+### Use Docker
 ```sh
 $ docker-compose up -d
 ```
+### Not Use Docker
+```sh
+$ ./abelab-home.py
+```
+
 
 ## Installation
 ```sh
 $ git clone <this repo>
 $ cd <this repo>
 ```
+
 
 ## Author
 * Tatsuya Abe
