@@ -155,56 +155,62 @@ class Engine():
 
             # 終了
             words = ['さようなら', '終了']
-            for w in words:
-                if w in speech:
-                    self.is_exit = True
-                    self.msg = 'また遊んでくださいね。'
-                    b_talk = True
-
-            # ダジャレを検索
-            words = ['ダジャレ', '地口', 'ジョーク']
-            for w in words:
-                if w in speech:
-                    url = 'https://script.google.com/macros/s/AKfycbx2h8jWePcUxszENqm4EqO7gk1bMDqGQKOUSPfQkDKtdwfoxAM/exec?randNum=1'
-                    res = requests.get(url)
-                    if docomo.check_health(res):
-                        self.msg = res.json()['jokes'][0]['joke']
+            if not b_talk:
+                for w in words:
+                    if w in speech:
+                        self.is_exit = True
+                        self.msg = 'また遊んでくださいね。'
                         b_talk = True
 
             # フリーワード検索
             words = ['を検索', 'の意味', 'とは']
-            for w in words:
-                if w in speech:
-                    target = re.match(r'.+{}'.format(w), speech).group()
-                    target = target.replace(w, '')
-                    if not target == '':
-                        doc = pycrawl.PyCrawl('https://ja.wikipedia.org/wiki/{}'.format(target))
-                        self.msg = doc.css('.mw-parser-output').css('p').inner_text()
-                        self.msg = re.sub(r'（.+）', '', self.msg)
-                        self.msg = re.sub(r'\[\d\]', '', self.msg)
-                        b_talk = True
+            if not b_talk:
+                for w in words:
+                    if w in speech:
+                        target = re.match(r'.+{}'.format(w), speech).group()
+                        target = target.replace(w, '')
+                        if not target == '':
+                            doc = pycrawl.PyCrawl('https://ja.wikipedia.org/wiki/{}'.format(target))
+                            self.msg = doc.css('.mw-parser-output').css('p').inner_text()
+                            self.msg = re.sub(r'（.+）', '', self.msg)
+                            self.msg = re.sub(r'\[\d\]', '', self.msg)
+                            b_talk = True
+
+            # ダジャレを検索
+            words = ['ダジャレ', '地口', 'ジョーク']
+            if not b_talk:
+                for w in words:
+                    if w in speech:
+                        url = 'https://script.google.com/macros/s/AKfycbx2h8jWePcUxszENqm4EqO7gk1bMDqGQKOUSPfQkDKtdwfoxAM/exec?randNum=1'
+                        res = requests.get(url)
+                        if docomo.check_health(res):
+                            self.msg = res.json()['jokes'][0]['joke']
+                            b_talk = True
 
             # 自己紹介を求める
             words = ['あなたは誰', 'あなたはだれ']
-            for w in words:
-                if w in speech:
-                    self.msg = '初めまして。私の名前はHEXAGONです。阿部健太朗さんによって2020年に開発されました。'
-                    b_talk = True
+            if not b_talk:
+                for w in words:
+                    if w in speech:
+                        self.msg = '初めまして。私の名前はHEXAGON、阿部健太朗さんによって開発されたお手伝いbotです。'
+                        b_talk = True
 
             # 自己紹介をする
             words = ['私の名前は', '僕の名前は', '俺の名前は']
-            for w in words:
-                if w in speech:
-                    name = speech.replace(w, '').replace('です', '').replace('。', '')
-                    self.msg = 'こんにちは。{}さん'.format(name)
-                    b_talk = True
+            if not b_talk:
+                for w in words:
+                    if w in speech:
+                        name = speech.replace(w, '').replace('です', '').replace('。', '')
+                        self.msg = 'こんにちは。{}さん'.format(name)
+                        b_talk = True
 
             # 挨拶
             words = ['初めまして', 'はじめまして', 'おはよう', 'おはようございます', 'こんにちは', 'こんばんは']
-            for w in words:
-                if w in speech:
-                    self.msg = w + '。'
-                    b_talk = True
+            if not b_talk:
+                for w in words:
+                    if w in speech:
+                        self.msg = w + '。'
+                        b_talk = True
 
 
         if not b_talk:
