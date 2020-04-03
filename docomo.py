@@ -32,8 +32,21 @@ def reading(text):
 
 
 def sensitive(text):
-    ## -----*----- センシティブチェック -----*----- ##
+    ## -----*----- センシティブ分析  -----*----- ##
     url = 'https://api.apigw.smt.docomo.ne.jp/truetext/v1/sensitivecheck?APIKEY={}'
+    header = { 'Content-Type': 'application/x-www-form-urlencoded' }
+    body = { 'text': text }
+
+    for key in APIKEY:
+        res = requests.post(url.format(key), headers=header, data=body)
+        if check_health(res): return res
+
+    return res
+
+
+def category(text):
+    ## -----*----- カテゴリ分析 -----*----- ##
+    url = 'https://api.apigw.smt.docomo.ne.jp/truetext/v1/clusteranalytics?APIKEY={}'
     header = { 'Content-Type': 'application/x-www-form-urlencoded' }
     body = { 'text': text }
 
@@ -68,4 +81,4 @@ def check_health(res):
 
 
 if __name__ == '__main__':
-    print(speech_recognition('wave/speech.wav').json())
+    print(category('私の名前は阿部です。').json())

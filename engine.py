@@ -7,6 +7,7 @@ import wave
 import pyaudio
 import threading
 import requests
+import pycrawl
 import recorder
 import docomo
 import warnings
@@ -94,12 +95,7 @@ class Engine():
             self.record.end()
             self.reset_state()
             self.is_stream = False
-            reply = self.reply()
-            if not reply == None:
-                self.msg = reply
-                time.sleep(0.2)
-                print('   HEXAGON： %s' % self.msg)
-                os.system('say {}'.format(reply))
+            self.reply()
 
 
     def up_edge(self):
@@ -146,25 +142,50 @@ class Engine():
 
     def reply(self):
         ## -----*----- 返信 -----*----- ##
+        b_talk = False
+
         res = docomo.speech_recognition(self.config['wav_path'])
         if docomo.check_health(res):
             speech = res.json()['text']
             if speech =='':
-                return None
+                return
 
             print('   You：     {}'.format(res.json()['text']))
 
-            exit_words = ['さようなら', '終了']
-            for w in exit_words:
+            # 終了
+            words = ['さようなら', '終了']
+            for w in words:
                 if w in speech:
                     self.is_exit = True
+                    self.msg = 'また遊んでくださいね。'
+                    b_talk = True
 
-            dajare_words = ['ダジャレ', '地口', 'ジョーク']
-            for w in dajare_words:
+            # ダジャレを検索
+            words = ['ダジャレ', '地口', 'ジョーク']
+            for w in words:
                 if w in speech:
                     url = 'https://script.google.com/macros/s/AKfycbx2h8jWePcUxszENqm4EqO7gk1bMDqGQKOUSPfQkDKtdwfoxAM/exec?randNum=1'
                     res = requests.get(url)
                     if docomo.check_health(res):
-                        return res.json()['jokes'][0]['joke']
+                        self.msg = res.json()['jokes'][0]['joke']
+                        b_talk = True
 
-        return 'すみません、よくわかりません。'
+            # フリーワード検索
+            if 'を検索' in speech:
+                pass
+
+            # 自己紹介を求める
+            words = ['あなたは誰', 'あなたはだれ']
+            for w in words:
+                if w in speech:
+                    self.msg = '初めまして。私の名前はHEXAGONです。阿部健太朗さんによって2020年に開発されました。'
+                    b_talk = True
+
+
+
+        if not b_talk:
+            self.msg = 'すみません、よくわかりません。'
+        time.sleep(0.2)
+        print('   HEXAGON： %s' % self.msg)
+        os.system('say {}'.format(self.msg))
+
