@@ -7,6 +7,10 @@ Abelab Home
 Smart speaker working from my home.
 
 
+## Demo
+[demo video](https://streamable.com/e/njvovx)
+
+
 ## Requirements
 * Raspbian 4.19
 * Python 3.7
