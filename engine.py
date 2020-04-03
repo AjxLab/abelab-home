@@ -24,7 +24,7 @@ class Engine():
         self.streamer = pa.open(
             format=pyaudio.paFloat32,
             channels=self.config['channels'],
-            rate=self.config['rate']*4,
+            rate=self.config['rate']*2,
             input=True,
             output=False,
             frames_per_buffer=self.config['chunk'],
@@ -36,6 +36,7 @@ class Engine():
         # フラグを初期化
         self.is_stream = False
         self.is_exit = False
+        self.talk_dajare = False
         # 録音器
         self.record = recorder.Recorder()
         # HEXAGONの返答
@@ -112,7 +113,7 @@ class Engine():
         ## -----*----- 立ち下がり検出 -----*----- ##
         if self.state['average'] <= self.state['border']:
             self.cnt_edge['down'] += 1
-        if self.cnt_edge['down'] > 10:
+        if self.cnt_edge['down'] > 15:
             self.cnt_edge['up'] = 0
             self.cnt_edge['down'] = 0
             return True
@@ -153,20 +154,28 @@ class Engine():
 
             print('   You：     {}'.format(res.json()['text']))
 
-            # 終了
-            words = ['さようなら', '終了']
-            if not b_talk:
-                for w in words:
-                    if w in speech:
-                        self.is_exit = True
-                        self.msg = 'また遊んでくださいね。'
+            # ダジャレを評価
+            if self.talk_dajare:
+                self.talk_dajare = False
+                speech = speech.replace('。', '')
+                url = 'http://abelab.dev:8080/joke/judge?joke={}'.format(speech)
+                res = requests.get(url)
+                if docomo.check_health(res):
+                    if res.json()['is_joke']:
+                        url = 'http://abelab.dev:8080/joke/evaluate?joke={}'.format(speech)
+                        res = requests.get(url)
+                        if docomo.check_health(res):
+                            self.msg = '「{}」は{:1.1f}点です。'.format(speech, res.json()['score'])
+                            b_talk = True
+                    else:
+                        self.msg = '「{}」はダジャレではありません。'.format(speech)
                         b_talk = True
 
             # フリーワード検索
             words = ['を検索', 'の意味', 'とは']
             if not b_talk:
                 for w in words:
-                    if w in speech:
+                    if re.match(w, speech):
                         target = re.match(r'.+{}'.format(w), speech).group()
                         target = target.replace(w, '')
                         if not target == '':
@@ -175,43 +184,65 @@ class Engine():
                             self.msg = re.sub(r'（.+）', '', self.msg)
                             self.msg = re.sub(r'\[\d\]', '', self.msg)
                             b_talk = True
+                            break
+
+            # ダジャレを評価
+            words = ['(ダジャレ|地口).*(判定|評価)']
+            if not b_talk:
+                for w in words:
+                    if re.match(w, speech):
+                        self.msg = 'ダジャレを評価します。'
+                        b_talk = True
+                        self.talk_dajare = True
 
             # ダジャレを検索
             words = ['ダジャレ', '地口', 'ジョーク']
             if not b_talk:
                 for w in words:
-                    if w in speech:
+                    if re.match(w, speech):
                         url = 'https://script.google.com/macros/s/AKfycbx2h8jWePcUxszENqm4EqO7gk1bMDqGQKOUSPfQkDKtdwfoxAM/exec?randNum=1'
                         res = requests.get(url)
                         if docomo.check_health(res):
                             self.msg = res.json()['jokes'][0]['joke']
                             b_talk = True
+                            break
 
             # 自己紹介を求める
-            words = ['あなたは誰', 'あなたはだれ']
+            words = ['あなたは誰', 'あなたはだれ', 'あなたの名前は']
             if not b_talk:
                 for w in words:
-                    if w in speech:
+                    if re.match(w, speech):
                         self.msg = '初めまして。私の名前はHEXAGON、阿部健太朗さんによって開発されたお手伝いbotです。'
                         b_talk = True
+                        break
 
             # 自己紹介をする
             words = ['私の名前は', '僕の名前は', '俺の名前は']
             if not b_talk:
                 for w in words:
-                    if w in speech:
+                    if re.match(w, speech):
                         name = speech.replace(w, '').replace('です', '').replace('。', '')
                         self.msg = 'こんにちは。{}さん'.format(name)
                         b_talk = True
+                        break
 
             # 挨拶
             words = ['初めまして', 'はじめまして', 'おはよう', 'おはようございます', 'こんにちは', 'こんばんは']
             if not b_talk:
                 for w in words:
-                    if w in speech:
+                    if re.match(w, speech):
                         self.msg = w + '。'
                         b_talk = True
+                        break
 
+            # 終了
+            words = ['さようなら', '終了']
+            if not b_talk:
+                for w in words:
+                    if re.match(w, speech):
+                        self.is_exit = True
+                        self.msg = 'また遊んでくださいね。'
+                        b_talk = True
 
         if not b_talk:
             self.msg = 'すみません、よくわかりません。'
