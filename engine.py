@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import re
 import time
 import yaml
 import numpy as np
@@ -171,8 +172,17 @@ class Engine():
                         b_talk = True
 
             # フリーワード検索
-            if 'を検索' in speech:
-                pass
+            words = ['を検索', 'の意味', 'とは']
+            for w in words:
+                if w in speech:
+                    target = re.match(r'.+{}'.format(w), speech).group()
+                    target = target.replace(w, '')
+                    if not target == '':
+                        doc = pycrawl.PyCrawl('https://ja.wikipedia.org/wiki/{}'.format(target))
+                        self.msg = doc.css('.mw-parser-output').css('p').inner_text()
+                        self.msg = re.sub(r'（.+）', '', self.msg)
+                        self.msg = re.sub(r'\[\d\]', '', self.msg)
+                        b_talk = True
 
             # 自己紹介を求める
             words = ['あなたは誰', 'あなたはだれ']
@@ -181,6 +191,20 @@ class Engine():
                     self.msg = '初めまして。私の名前はHEXAGONです。阿部健太朗さんによって2020年に開発されました。'
                     b_talk = True
 
+            # 自己紹介をする
+            words = ['私の名前は', '僕の名前は', '俺の名前は']
+            for w in words:
+                if w in speech:
+                    name = speech.replace(w, '').replace('です', '').replace('。', '')
+                    self.msg = 'こんにちは。{}さん'.format(name)
+                    b_talk = True
+
+            # 挨拶
+            words = ['初めまして', 'はじめまして', 'おはよう', 'おはようございます', 'こんにちは', 'こんばんは']
+            for w in words:
+                if w in speech:
+                    self.msg = w + '。'
+                    b_talk = True
 
 
         if not b_talk:
